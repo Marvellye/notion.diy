@@ -80,13 +80,13 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background font-sfpro">
       {/* Navbar */}
       <div className="bg-secondary border-b">
         <div className="container mx-auto py-2 px-4 flex items-center justify-between">
           <span className="font-bold text-lg">notion.diy</span>
           <Button asChild>
-            <a href="https://marvellye.com.ng" target="_blank" rel="noopener noreferrer">
+            <a href="https://marvelly.com.ng" target="_blank" rel="noopener noreferrer">
               Dev
             </a>
           </Button>
