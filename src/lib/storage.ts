@@ -8,9 +8,7 @@ interface Note {
   id: string;
   title: string;
   content: string;
-  userId: string;
   created_at: string;
-  shared?: boolean;
 }
 
 class Storage {
@@ -81,25 +79,15 @@ class Storage {
   }
 
   getNotes(): Note[] {
-    if (!this.currentUser) return [];
-    return this.notes.filter(note => note.userId === this.currentUser!.id);
-  }
-
-  getSharedNote(id: string): Note | null {
-    const note = this.notes.find(n => n.id === id && n.shared);
-    return note || null;
+    return this.notes;
   }
 
   createNote(title: string, content: string): Note {
-    if (!this.currentUser) throw new Error('Not authenticated');
-
     const note: Note = {
       id: crypto.randomUUID(),
       title,
       content,
-      userId: this.currentUser.id,
       created_at: new Date().toISOString(),
-      shared: false,
     };
 
     this.notes.push(note);
@@ -108,9 +96,7 @@ class Storage {
   }
 
   updateNote(id: string, updates: Partial<Note>): Note {
-    if (!this.currentUser) throw new Error('Not authenticated');
-
-    const noteIndex = this.notes.findIndex(n => n.id === id && n.userId === this.currentUser!.id);
+    const noteIndex = this.notes.findIndex(n => n.id === id);
     if (noteIndex === -1) throw new Error('Note not found');
 
     this.notes[noteIndex] = { ...this.notes[noteIndex], ...updates };
@@ -119,21 +105,8 @@ class Storage {
   }
 
   deleteNote(id: string) {
-    if (!this.currentUser) throw new Error('Not authenticated');
-
-    this.notes = this.notes.filter(n => !(n.id === id && n.userId === this.currentUser!.id));
+    this.notes = this.notes.filter(n => n.id !== id);
     this.saveData();
-  }
-
-  toggleNoteSharing(id: string): Note {
-    if (!this.currentUser) throw new Error('Not authenticated');
-
-    const note = this.notes.find(n => n.id === id && n.userId === this.currentUser!.id);
-    if (!note) throw new Error('Note not found');
-
-    note.shared = !note.shared;
-    this.saveData();
-    return note;
   }
 }
 

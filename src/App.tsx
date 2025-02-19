@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, File, Trash2, Share2, LogOut } from 'lucide-react';
+import { Plus, File, Trash2 } from 'lucide-react';
 import { MarkdownPreview } from '@/components/markdown-preview';
-import { storage } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 
 interface Note {
