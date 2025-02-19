@@ -7,18 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, File, Trash2, Share2, LogOut } from 'lucide-react';
 import { MarkdownPreview } from '@/components/markdown-preview';
 import { AuthForm } from '@/components/auth-form';
-import { storage } from '@/lib/storage';
+import { storage, User, Note } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  userId: string;
-  created_at: string;
-  shared?: boolean;
-}
 
 function App() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -30,38 +21,91 @@ function App() {
 
   useEffect(() => {
     if (user) {
-      setNotes(storage.getNotes());
+      fetchNotes();
     }
   }, [user]);
 
-  const createNewNote = () => {
+  const fetchNotes = async () => {
     try {
-      const newNote = storage.createNote('Untitled', '');
+      const response = await fetch(`/api/notes?userId=${user!.id}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setNotes(data);
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+      toast({
+        title: "Error fetching notes",
+        description: error instanceof Error ? error.message : "Failed to fetch notes",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createNewNote = async () => {
+    try {
+      const response = await fetch('/api/notes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title: 'Untitled', content: '', userId: user!.id }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const newNote = await response.json();
       setNotes([newNote, ...notes]);
       setSelectedNote(newNote);
       setTitle(newNote.title);
       setContent(newNote.content);
     } catch (error) {
       console.error('Error creating note:', error);
+      toast({
+        title: "Error creating note",
+        description: error instanceof Error ? error.message : "Failed to create note",
+        variant: "destructive",
+      });
     }
   };
 
-  const updateNote = () => {
+  const updateNote = async () => {
     if (!selectedNote) return;
 
     try {
-      const updatedNote = storage.updateNote(selectedNote.id, { title, content });
+      const response = await fetch('/api/notes', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: selectedNote.id, title, content }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const updatedNote = await response.json();
       setNotes(notes.map((note) =>
         note.id === selectedNote.id ? updatedNote : note
       ));
     } catch (error) {
       console.error('Error updating note:', error);
+      toast({
+        title: "Error updating note",
+        description: error instanceof Error ? error.message : "Failed to update note",
+        variant: "destructive",
+      });
     }
   };
 
-  const deleteNote = (id: string) => {
+  const deleteNote = async (id: string) => {
     try {
-      storage.deleteNote(id);
+      const response = await fetch(`/api/notes?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       setNotes(notes.filter((note) => note.id !== id));
       if (selectedNote?.id === id) {
         setSelectedNote(null);
@@ -70,12 +114,27 @@ function App() {
       }
     } catch (error) {
       console.error('Error deleting note:', error);
+      toast({
+        title: "Error deleting note",
+        description: error instanceof Error ? error.message : "Failed to delete note",
+        variant: "destructive",
+      });
     }
   };
 
-  const toggleShare = (note: Note) => {
+  const toggleShare = async (note: Note) => {
     try {
-      const updatedNote = storage.toggleNoteSharing(note.id);
+      const response = await fetch(`/api/notes/${note.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ shared: !note.shared }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const updatedNote = await response.json();
       setNotes(notes.map((n) => n.id === note.id ? updatedNote : n));
       
       if (updatedNote.shared) {
@@ -88,6 +147,11 @@ function App() {
       }
     } catch (error) {
       console.error('Error toggling share:', error);
+      toast({
+        title: "Error toggling share",
+        description: error instanceof Error ? error.message : "Failed to toggle share",
+        variant: "destructive",
+      });
     }
   };
 
