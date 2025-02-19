@@ -13,7 +13,7 @@ export function SharedNote({ noteId }: SharedNoteProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const sharedNote = storage.getSharedNote(noteId);
+    const sharedNote = storage.getNotes().find(note => note.id === noteId);
     setNote(sharedNote);
     setLoading(false);
   }, [noteId]);
