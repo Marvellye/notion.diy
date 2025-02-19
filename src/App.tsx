@@ -4,9 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, File, Trash2 } from 'lucide-react';
+import { Plus, File, Trash2, Menu } from 'lucide-react';
 import { MarkdownPreview } from '@/components/markdown-preview';
 import { cn } from '@/lib/utils';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 interface Note {
   id: string;
@@ -73,60 +81,137 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navbar */}
+      <div className="bg-secondary border-b">
+        <div className="container mx-auto py-2 px-4 flex items-center justify-between">
+          <span className="font-bold text-lg">notion.diy</span>
+          <Button asChild>
+            <a href="https://marvellye.com.ng" target="_blank" rel="noopener noreferrer">
+              Dev
+            </a>
+          </Button>
+        </div>
+      </div>
+
       <div className="container mx-auto p-4">
         <div className="grid grid-cols-12 gap-4 max-w-7xl mx-auto">
           {/* Sidebar */}
-          <Card className="col-span-3 p-4 h-[calc(100vh-2rem)]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Notes</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={createNewNote}
-              >
-                <Plus className="h-5 w-5" />
-              </Button>
-            </div>
-            <ScrollArea className="h-[calc(100vh-8rem)]">
-              <div className="space-y-2">
-                {notes.map((note) => (
-                  <div
-                    key={note.id}
-                    className={cn(
-                      'flex items-center justify-between p-2 rounded-lg cursor-pointer group',
-                      selectedNote?.id === note.id
-                        ? 'bg-accent'
-                        : 'hover:bg-accent/50'
-                    )}
-                    onClick={() => {
-                      setSelectedNote(note);
-                      setTitle(note.title);
-                      setContent(note.content);
-                    }}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <File className="h-4 w-4" />
-                      <span className="text-sm truncate">{note.title}</span>
-                    </div>
+          <div className="col-span-12 md:col-span-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="md:hidden mb-4">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="md:block">
+                <SheetHeader>
+                  <SheetTitle>Notes</SheetTitle>
+                  <SheetDescription>
+                    Manage your notes here.
+                  </SheetDescription>
+                </SheetHeader>
+                <Card className="p-4 h-[calc(100vh-12rem)] md:h-[calc(100vh-2rem)] border-none shadow-none">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">All Notes</h2>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="opacity-0 group-hover:opacity-100 h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNote(note.id);
-                      }}
+                      onClick={createNewNote}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Plus className="h-5 w-5" />
                     </Button>
                   </div>
-                ))}
+                  <ScrollArea className="h-[calc(100vh-16rem)] md:h-[calc(100vh-8rem)]">
+                    <div className="space-y-2">
+                      {notes.map((note) => (
+                        <div
+                          key={note.id}
+                          className={cn(
+                            'flex items-center justify-between p-2 rounded-lg cursor-pointer group',
+                            selectedNote?.id === note.id
+                              ? 'bg-accent'
+                              : 'hover:bg-accent/50'
+                          )}
+                          onClick={() => {
+                            setSelectedNote(note);
+                            setTitle(note.title);
+                            setContent(note.content);
+                          }}
+                        >
+                            <div className="flex items-center space-x-2">
+                              <File className="h-4 w-4" />
+                              <span className="text-sm truncate">{note.title}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-0 group-hover:opacity-100 h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNote(note.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </Card>
+              </SheetContent>
+            </Sheet>
+            <Card className="hidden md:block p-4 h-[calc(100vh-2rem)] border-none shadow-none">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">All Notes</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={createNewNote}
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
               </div>
-            </ScrollArea>
-          </Card>
+              <ScrollArea className="h-[calc(100vh-8rem)]">
+                <div className="space-y-2">
+                  {notes.map((note) => (
+                    <div
+                      key={note.id}
+                      className={cn(
+                        'flex items-center justify-between p-2 rounded-lg cursor-pointer group',
+                        selectedNote?.id === note.id
+                          ? 'bg-accent'
+                          : 'hover:bg-accent/50'
+                      )}
+                      onClick={() => {
+                        setSelectedNote(note);
+                        setTitle(note.title);
+                        setContent(note.content);
+                      }}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <File className="h-4 w-4" />
+                        <span className="text-sm truncate">{note.title}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100 h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNote(note.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </Card>
+          </div>
 
           {/* Main Content */}
-          <Card className="col-span-9 p-4 h-[calc(100vh-2rem)]">
+          <Card className="col-span-12 md:col-span-9 p-4 h-[calc(100vh-2rem)]">
             {selectedNote ? (
               <div className="h-full flex flex-col">
                 <Input
