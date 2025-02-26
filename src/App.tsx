@@ -88,6 +88,7 @@ function App() {
     const element = previewRef.current;
     const canvas = await html2canvas(element, {
       scale: 2, // Increase scale for better resolution
+      useCORS: true, // Enable cross-origin support
     });
     const data = canvas.toDataURL('image/png');
 
