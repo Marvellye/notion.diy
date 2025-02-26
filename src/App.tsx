@@ -86,19 +86,23 @@ function App() {
     if (!previewRef.current) return;
 
     const element = previewRef.current;
-    const canvas = await html2canvas(element, {
-      scale: 2, // Increase scale for better resolution
-      useCORS: true, // Enable cross-origin support
-    });
-    const data = canvas.toDataURL('image/png');
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2, // Increase scale for better resolution
+        useCORS: true, // Enable cross-origin support
+      });
+      const data = canvas.toDataURL('image/jpeg', 0.8); // Convert to JPEG with 80% quality
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    //const imgProps = pdf.getImageProperties(data); // Remove this line
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (pdfWidth * canvas.height) / canvas.width; // Calculate height based on aspect ratio
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(data);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    pdf.addImage(data, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`${title || 'note'}.pdf`);
+      pdf.addImage(data, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${title || 'note'}.pdf`);
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+    }
   };
 
   return (
