@@ -93,9 +93,9 @@ function App() {
     const data = canvas.toDataURL('image/png');
 
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(data);
+    //const imgProps = pdf.getImageProperties(data); // Remove this line
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    const pdfHeight = (pdfWidth * canvas.height) / canvas.width; // Calculate height based on aspect ratio
 
     pdf.addImage(data, 'PNG', 0, 0, pdfWidth, pdfHeight);
     pdf.save(`${title || 'note'}.pdf`);
