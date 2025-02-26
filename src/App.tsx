@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, File, Trash2, Menu } from 'lucide-react';
+import { Plus, File, Trash2, Menu, Download } from 'lucide-react';
 import { MarkdownPreview } from '@/components/markdown-preview';
 import { cn } from '@/lib/utils';
 import {
@@ -15,6 +15,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface Note {
   id: string;
@@ -28,6 +30,7 @@ function App() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const savedNotes = localStorage.getItem('notes');
@@ -77,6 +80,24 @@ function App() {
       setTitle('');
       setContent('');
     }
+  };
+
+  const exportToPDF = async () => {
+    if (!previewRef.current) return;
+
+    const element = previewRef.current;
+    const canvas = await html2canvas(element, {
+      scale: 2, // Increase scale for better resolution
+    });
+    const data = canvas.toDataURL('image/png');
+
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(data);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    pdf.addImage(data, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`${title || 'note'}.pdf`);
   };
 
   return (
@@ -214,15 +235,20 @@ function App() {
           <Card className="col-span-12 md:col-span-9 p-4 h-[calc(100vh-2rem)]">
             {selectedNote ? (
               <div className="h-full flex flex-col">
-                <Input
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    updateNote();
-                  }}
-                  placeholder="Note title"
-                  className="text-xl font-semibold mb-4 border-none focus-visible:ring-0"
-                />
+                <div className="flex justify-between items-center mb-4">
+                  <Input
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      updateNote();
+                    }}
+                    placeholder="Note title"
+                    className="text-xl font-semibold border-none focus-visible:ring-0"
+                  />
+                  <Button variant="outline" size="icon" onClick={exportToPDF}>
+                    <Download className="h-5 w-5" />
+                  </Button>
+                </div>
                 <Tabs defaultValue="edit" className="flex-grow">
                   <TabsList>
                     <TabsTrigger value="edit">Edit</TabsTrigger>
@@ -244,6 +270,9 @@ function App() {
                   <TabsContent value="preview" className="flex-grow mt-0">
                     <ScrollArea className="h-[calc(100vh-12rem)] p-4">
                       <MarkdownPreview content={content} />
+                      <div ref={previewRef} className="hidden">
+                        <MarkdownPreview content={content} />
+                      </div>
                     </ScrollArea>
                   </TabsContent>
                 </Tabs>
