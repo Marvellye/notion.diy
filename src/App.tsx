@@ -268,7 +268,7 @@ function App() {
                           updateNote();
                         }}
                         placeholder="Start writing your note... Use Markdown syntax for formatting"
-                        className="w-full h-full p-2 bg-transparent border-none focus:outline-none resize-none"
+                        className="w-full h-[calc(100vh-12rem)] p-2 bg-transparent border-none focus:outline-none resize-none"
                       />
                     </ScrollArea>
                   </TabsContent>
