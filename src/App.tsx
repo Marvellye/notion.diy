@@ -31,6 +31,7 @@ function App() {
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const previewRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
 
   useEffect(() => {
     const savedNotes = localStorage.getItem('notes');
@@ -59,17 +60,23 @@ function App() {
     setContent(newNote.content);
   };
 
-  const updateNote = () => {
+  const updateNoteTitle = (newTitle: string) => {
+    if (!selectedNote) return;
+    
+    const updatedNotes = notes.map((note) =>
+        note.id === selectedNote.id ? { ...note, title: newTitle } : note
+      );
+      saveNotesToStorage(updatedNotes);
+  };
+
+  const updateNoteContent = (newContent: string) => {
     if (!selectedNote) return;
 
     const updatedNotes = notes.map((note) =>
-      note.id === selectedNote.id
-        ? { ...note, title, content }
-        : note
-    );
-
-    saveNotesToStorage(updatedNotes);
-  };
+        note.id === selectedNote.id ? { ...note, content: newContent } : note
+      );
+      saveNotesToStorage(updatedNotes);
+  }
 
   const deleteNote = (id: string) => {
     const updatedNotes = notes.filter((note) => note.id !== id);
@@ -88,17 +95,28 @@ function App() {
     const element = previewRef.current;
     try {
       const canvas = await html2canvas(element, {
-        scale: 2, // Increase scale for better resolution
-        useCORS: true, // Enable cross-origin support
+        scale: 2,
+        useCORS: true,
+        logging: true,
       });
-      const data = canvas.toDataURL('image/jpeg', 0.8); // Convert to JPEG with 80% quality
+      const data = canvas.toDataURL('image/jpeg', 0.8);
 
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgProps = pdf.getImageProperties(data);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const padding = 10;
+      const paddedWidth = pdfWidth - 2 * padding;
+      let paddedHeight = pdfHeight - 2 * padding;
 
-      pdf.addImage(data, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      // Check if content height is greater than paddedHeight
+      if (pdfHeight > pdf.internal.pageSize.getHeight() - 2 * padding) {
+        paddedHeight = pdf.internal.pageSize.getHeight() - 2 * padding;
+      }
+      const x = padding;
+      const y = padding;
+
+      pdf.addImage(data, 'JPEG', x, y, paddedWidth, paddedHeight);
       pdf.save(`${title || 'note'}.pdf`);
     } catch (error) {
       console.error('Error exporting to PDF:', error);
@@ -132,18 +150,12 @@ function App() {
               <SheetContent side="left" className="md:block">
                 <SheetHeader>
                   <SheetTitle>Notes</SheetTitle>
-                  <SheetDescription>
-                    Manage your notes here.
-                  </SheetDescription>
+                  <SheetDescription>Manage your notes here.</SheetDescription>
                 </SheetHeader>
                 <Card className="p-4 h-[calc(100vh-12rem)] md:h-[calc(100vh-2rem)] border-none shadow-none">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">All Notes</h2>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={createNewNote}
-                    >
+                    <Button variant="ghost" size="icon" onClick={createNewNote}>
                       <Plus className="h-5 w-5" />
                     </Button>
                   </div>
@@ -154,9 +166,7 @@ function App() {
                           key={note.id}
                           className={cn(
                             'flex items-center justify-between p-2 rounded-lg cursor-pointer group',
-                            selectedNote?.id === note.id
-                              ? 'bg-accent'
-                              : 'hover:bg-accent/50'
+                            selectedNote?.id === note.id ? 'bg-accent' : 'hover:bg-accent/50'
                           )}
                           onClick={() => {
                             setSelectedNote(note);
@@ -164,22 +174,22 @@ function App() {
                             setContent(note.content);
                           }}
                         >
-                            <div className="flex items-center space-x-2">
-                              <File className="h-4 w-4" />
-                              <span className="text-sm truncate">{note.title}</span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="opacity-0 group-hover:opacity-100 h-8 w-8"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNote(note.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <div className="flex items-center space-x-2">
+                            <File className="h-4 w-4" />
+                            <span className="text-sm truncate">{note.title}</span>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNote(note.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       ))}
                     </div>
                   </ScrollArea>
@@ -189,11 +199,7 @@ function App() {
             <Card className="hidden md:block p-4 h-[calc(100vh-2rem)] border-none shadow-none">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">All Notes</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={createNewNote}
-                >
+                <Button variant="ghost" size="icon" onClick={createNewNote}>
                   <Plus className="h-5 w-5" />
                 </Button>
               </div>
@@ -204,9 +210,7 @@ function App() {
                       key={note.id}
                       className={cn(
                         'flex items-center justify-between p-2 rounded-lg cursor-pointer group',
-                        selectedNote?.id === note.id
-                          ? 'bg-accent'
-                          : 'hover:bg-accent/50'
+                        selectedNote?.id === note.id ? 'bg-accent' : 'hover:bg-accent/50'
                       )}
                       onClick={() => {
                         setSelectedNote(note);
@@ -244,17 +248,23 @@ function App() {
                   <Input
                     value={title}
                     onChange={(e) => {
-                      setTitle(e.target.value);
-                      updateNote();
+                      setTitle(e.target.value)
+                      updateNoteTitle(e.target.value); // Update the note title immediately
                     }}
                     placeholder="Note title"
                     className="text-xl font-semibold border-none focus-visible:ring-0"
                   />
-                  <Button variant="outline" size="icon" onClick={exportToPDF}>
-                    <Download className="h-5 w-5" />
-                  </Button>
+                  {activeTab === 'preview' && (
+                    <Button variant="outline" size="icon" onClick={exportToPDF}>
+                      <Download className="h-5 w-5" />
+                    </Button>
+                  )}
                 </div>
-                <Tabs defaultValue="edit" className="flex-grow">
+                <Tabs
+                  defaultValue="edit"
+                  className="flex-grow"
+                  onValueChange={(value) => setActiveTab(value as 'edit' | 'preview')}
+                >
                   <TabsList>
                     <TabsTrigger value="edit">Edit</TabsTrigger>
                     <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -264,8 +274,8 @@ function App() {
                       <textarea
                         value={content}
                         onChange={(e) => {
-                          setContent(e.target.value);
-                          updateNote();
+                          setContent(e.target.value)
+                          updateNoteContent(e.target.value); // Update the note content immediately
                         }}
                         placeholder="Start writing your note... Use Markdown syntax for formatting"
                         className="w-full h-[calc(100vh-12rem)] p-2 bg-transparent border-none focus:outline-none resize-none"
@@ -274,8 +284,7 @@ function App() {
                   </TabsContent>
                   <TabsContent value="preview" className="flex-grow mt-0">
                     <ScrollArea className="h-[calc(100vh-12rem)] p-4">
-                      <MarkdownPreview content={content} />
-                      <div ref={previewRef} className="hidden">
+                      <div ref={previewRef}>
                         <MarkdownPreview content={content} />
                       </div>
                     </ScrollArea>
@@ -285,9 +294,7 @@ function App() {
             ) : (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <h3 className="text-lg font-medium mb-2">
-                    No note selected
-                  </h3>
+                  <h3 className="text-lg font-medium mb-2">No note selected</h3>
                   <p className="text-sm text-muted-foreground">
                     Select a note from the sidebar or create a new one
                   </p>
